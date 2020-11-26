@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="WpfApp.UserControls.BrightnessDistributionControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style x:Key="Row">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsInUse}" Value="True">
+                        <Setter Property="TextBlock.Background" Value="Red"></Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Style.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Margin="0 3"
+                   FontWeight="Bold"
+                   TextWrapping="WrapWithOverflow" 
+                   TextAlignment="Center"
+                   Text="Регистрация пространственного распределения яркости диффузно рассеянного зондирующего излучения">
+        </TextBlock>
+        <Separator></Separator>
+        <TextBlock Margin="0 3"
+                   TextWrapping="WrapWithOverflow"
+                   TextAlignment="Center"
+                   Text="Используемые LED и длины волн максимума в нм">
+        </TextBlock>
+        <DataGrid ItemsSource="{Binding Diodes}" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="#">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource Row}" Text="{Binding Number}"></TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridCheckBoxColumn Header="Use" Binding="{Binding Path=Use}"></DataGridCheckBoxColumn>
+                <DataGridTextColumn Width="50" Header="Wmax" Binding="{Binding Path=MaxEnergy}"></DataGridTextColumn>
+                <DataGridTextColumn Width="50" Header="Tau" Binding="{Binding Path=Tau}"></DataGridTextColumn>
+                <DataGridTextColumn Width="50" Header="Km1" Binding="{Binding Path=Km1}"></DataGridTextColumn>
+                <DataGridTextColumn Width="50" Header="Km2" Binding="{Binding Path=Km2}"></DataGridTextColumn>
+                <DataGridTextColumn Width="50" Header="Step" Binding="{Binding Path=Step}"></DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <WrapPanel Orientation="Horizontal" Margin="0 3" HorizontalAlignment="Right">
+            <Button Margin="3 0" Content="Load" Width="70"
+                    Command="{Binding LoadDiodesCommand}">
+            </Button>
+            <Button Margin="3 0" Content="Save" Width="70"
+                    Command="{Binding SaveDiodesCommand}">
+            </Button>
+        </WrapPanel>
+        <TextBlock Margin="0 3"
+                   TextAlignment="Center"
+                   TextWrapping="WrapWithOverflow"
+                   Text="Экспозиция в мс и коэффициенты ее увеличения, позиция LED (в количестве шагов смещения)">
+        </TextBlock>
+        <Separator/>
+        <CheckBox Margin="0, 5"
+                  IsChecked="{Binding TauTuning}"
+                  HorizontalAlignment="Center"
+                  Content="Настройка значений tau">
+        </CheckBox>
+        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+            <Button IsEnabled="{Binding IsInProgress, Converter={StaticResource InverseBooleanConverter}}"
+                    Command="{Binding StartCommand}"
+                    Margin="5"
+                    Width="90"
+                    Content="Start">
+            </Button>
+            <Button IsEnabled="{Binding IsInProgress}"
+                    Margin="5"
+                    Width="90"
+                    Content="Stop">
+            </Button>
+        </WrapPanel>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,145 @@
+﻿<Window x:Class="WpfApp.Views.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:uc="clr-namespace:WpfApp.UserControls"
+        xmlns:prism="http://prismlibrary.com/"
+        prism:ViewModelLocator.AutoWireViewModel="True"
+        mc:Ignorable="d"
+        Title="ShellWindow" Height="600" Width="1100">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Style.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="30*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20*"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="50*"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="30*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <ScrollViewer DataContext="{Binding CameraViewModel}"
+                      Grid.RowSpan="3" 
+                      Grid.Column="0" 
+                      Grid.Row="0" 
+                      VerticalScrollBarVisibility="Hidden">
+            <StackPanel>
+                <TextBlock Text="{Binding CameraState}" 
+                           Style="{StaticResource ErrorMessage}">
+                </TextBlock>
+                <StackPanel Visibility="{Binding Camera.IsOpen, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"
+                            HorizontalAlignment="Center" Orientation="Horizontal">
+                    <Button Command="{Binding StartVideoCommand}" 
+                            Margin="5 0"
+                            Style="{StaticResource SmallIconButton}"
+                            ToolTip="Starts image acquisition and displays capture images in the display pane">
+                        <Image Source="/Icons/play.png" />
+                    </Button>
+                    <Button Command="{Binding StopVideoCommand}"
+                            Margin="5 0" 
+                            Style="{StaticResource SmallIconButton}"
+                            ToolTip="Pauses the image acquisition">
+                        <Image Source="/Icons/pause.png" />
+                    </Button>
+                    <Button Command="{Binding TakeSnapshotCommand}"
+                            Margin="5 0"
+                            Style="{StaticResource SmallIconButton}"
+                            ToolTip="Take snapshot">
+                        <Image Source="/Icons/camera.png"></Image>
+                    </Button>
+                </StackPanel>
+                <Expander DataContext="{Binding Camera}" 
+                          Header="Camera Live State" 
+                          IsExpanded="True"
+                          Visibility="{Binding IsOpen, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"
+                          IsEnabled="{Binding IsOpen, FallbackValue=false}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ExposureTime, StringFormat='Время экспозиции: {0:0} мкс'}"
+                                   Margin="5">
+                        </TextBlock>
+                        <TextBlock Text="{Binding Gain, StringFormat='Коэф. усиления: {0:N0} дБ'}"
+                                   Margin="5">
+                        </TextBlock>
+                        <TextBlock Text="{Binding FrameRate, StringFormat='fps: {0:N0} кадров/с'}"
+                                   Margin="5">
+                        </TextBlock>
+                    </StackPanel>
+                </Expander>
+                <Expander DataContext="{Binding Camera}"
+                          Header="Camera Settings" 
+                          IsExpanded="True"
+                          Visibility="{Binding IsOpen, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"
+                          IsEnabled="{Binding IsOpen, FallbackValue=false}">
+                    <StackPanel>
+                        <GroupBox Header="Exposure">
+                            <StackPanel>
+                                <CheckBox IsChecked="{Binding ExposureAuto}" 
+                                  Content="Auto" 
+                                  Margin="5" />
+                                <TextBox Text="{Binding ExposureTime}" 
+                                 IsEnabled="{Binding ExposureAuto, Converter={StaticResource InverseBooleanConverter}}" 
+                                 Margin="5" />
+                                <Slider Value="{Binding ExposureTime}" 
+                                Minimum="{Binding ExposureTimeMin}"
+                                Maximum="{Binding ExposureTimeMax}"
+                                IsEnabled="{Binding ExposureAuto, Converter={StaticResource InverseBooleanConverter}}"
+                                Margin="5"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Gain">
+                            <StackPanel>
+                                <CheckBox IsChecked="{Binding GainAuto}" Content="Auto" Margin="5" />
+                                <TextBox Text="{Binding Gain}"
+                                 IsEnabled="{Binding GainAuto, Converter={StaticResource InverseBooleanConverter}}"
+                                 Margin="5"/>
+                                <Slider Value="{Binding Gain}"
+                                Minimum="{Binding GainMin}" 
+                                Maximum="{Binding GainMax}"
+                                IsEnabled="{Binding GainAuto, Converter={StaticResource InverseBooleanConverter}}"
+                                Margin="5" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Header="Pixel Format">
+                            <StackPanel>
+                                <ComboBox ItemsSource="{Binding PixelFormats}"
+                                  SelectedItem="{Binding PixelFormat}"
+                                  IsEnabled="{Binding IsGrabbing, Converter={StaticResource InverseBooleanConverter}}"
+                                  Margin="5">
+                                </ComboBox>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+        <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Width="3" VerticalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+        <Image Grid.Row="0" Grid.Column="2" Source="{Binding CameraViewModel.Image}"></Image>
+        <GridSplitter Grid.Row="0" Grid.Column="3" Grid.RowSpan="3" Width="3" VerticalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+        <TabControl Grid.RowSpan="3" Grid.Column="4" Grid.Row="0">
+            <TabItem Header="Pupil reaction">
+                <uc:PupilReactionControl DataContext="{Binding PupilReactionViewModel}"></uc:PupilReactionControl>
+            </TabItem>
+            <TabItem Header="Brightness Distribution">
+                <uc:BrightnessDistributionControl DataContext="{Binding BrightnessDistributionViewModel}"></uc:BrightnessDistributionControl>
+            </TabItem>
+        </TabControl>
+        <GridSplitter Grid.Row="1" Grid.Column="2" Height="3" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+        <ScrollViewer DataContext="{Binding PortViewModel}" 
+                      Grid.Row="2" Grid.Column="2" 
+                      VerticalScrollBarVisibility="Hidden"
+                      HorizontalScrollBarVisibility="Hidden">
+            <uc:PortControl></uc:PortControl>
+        </ScrollViewer>
+    </Grid>
+</Window>
