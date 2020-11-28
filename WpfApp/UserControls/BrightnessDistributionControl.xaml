@@ -83,5 +83,6 @@
                     Content="Stop">
             </Button>
         </WrapPanel>
+        <TextBlock HorizontalAlignment="Center" Text="{Binding State}"></TextBlock>
     </StackPanel>
 </UserControl>
