@@ -22,6 +22,7 @@
                           Margin="0 5"/>
                 <Button Margin="0 5"
                         Command="{Binding ConnectCommand}"
+                        CommandParameter="{Binding SelectedPort}"
                         Content="Connect"/>
                 <Button Margin="0 5"
                         IsEnabled="{Binding Port.IsOpen, FallbackValue=false}"
