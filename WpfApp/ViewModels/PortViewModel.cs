@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
+using System.Windows.Threading;
 using AppDomain.Services;
 using Prism.Commands;
 using Prism.Mvvm;
@@ -109,12 +110,12 @@ namespace WpfApp.ViewModels
 
         private void PortProvider_CommandSent(object sender, AppDomain.Events.PortCommandSentEventArgs e)
         {
-            SentCommands.Add(e.Command);
+            Dispatcher.CurrentDispatcher.Invoke(() => SentCommands.Add(e.Command));
         }
 
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            ReceivedData.Add(e.ToString());
+            Dispatcher.CurrentDispatcher.Invoke(() => ReceivedData.Add(e.ToString()));
         }
     }
 }
