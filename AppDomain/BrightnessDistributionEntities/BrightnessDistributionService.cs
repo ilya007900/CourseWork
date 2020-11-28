@@ -36,6 +36,11 @@ namespace AppDomain.BrightnessDistributionEntities
 
             try
             {
+                if (!cameraProvider.ConnectedCamera.IsGrabbing)
+                {
+                    cameraProvider.ConnectedCamera.StartGrabbing();
+                }
+
                 cameraProvider.ConnectedCamera.ExposureAuto = false;
                 portProvider.ConnectedPort.DataReceived += ConnectedPort_DataReceived;
 

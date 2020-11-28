@@ -12,7 +12,7 @@ namespace AppDomain.PupilReactionEntities
         private readonly PupilReactionSnapshotStorage snapshotStorage = new PupilReactionSnapshotStorage();
 
         private Timer timer;
-        private PupilReaction model;
+        private PupilReaction behavior;
 
         public event EventHandler<BrightChangedEventArgs> BrightChanged;
         public event EventHandler<EventArgs> Stopped; 
@@ -35,25 +35,30 @@ namespace AppDomain.PupilReactionEntities
                 return Result.Failure("Port not found. Please connect port");
             }
 
-            if (this.model != null)
+            if (behavior != null)
             {
                 return Result.Failure("Previous operation was not finished.");
             }
 
             try
             {
-                this.model = model;
-                this.model.Init();
-                OnBrightChanged(this.model.CurrentBright);
+                if (!cameraProvider.ConnectedCamera.IsGrabbing)
+                {
+                    cameraProvider.ConnectedCamera.StartGrabbing();
+                }
+
+                behavior = model;
+                behavior.Init();
+                OnBrightChanged(behavior.CurrentBright);
 
                 portProvider.WriteCommand("#LEDAON");
-                portProvider.WriteCommand($"#PWMB{this.model.StartingBrightLevel}");
+                portProvider.WriteCommand($"#PWMB{behavior.StartingBrightLevel}");
 
                 if (isAutoMode)
                 {
                     timer = new Timer(state =>
                     {
-                        if (this.model.CurrentBright == byte.MaxValue)
+                        if (behavior.CurrentBright == byte.MaxValue)
                         {
                             Stop();
                             return;
@@ -75,16 +80,16 @@ namespace AppDomain.PupilReactionEntities
         public void Stop()
         {
             timer?.Dispose();
-            snapshotStorage.Save(model.StartingBrightLevel, model.CurrentBright);
+            snapshotStorage.Save(behavior.StartingBrightLevel, behavior.CurrentBright);
             portProvider.WriteCommand("#LEDAOFF");
             portProvider.WriteCommand("#LEDBOFF");
-            model = null;
+            behavior = null;
             OnStopped();
         }
 
         public void IncreaseBright()
         {
-            var currentBright = model.IncreaseBright();
+            var currentBright = behavior.IncreaseBright();
             portProvider.WriteCommand("#PWMB" + currentBright);
             OnBrightChanged(currentBright);
         }
@@ -99,7 +104,7 @@ namespace AppDomain.PupilReactionEntities
                 ExposureTime = cameraProvider.ConnectedCamera.ExposureTime,
                 Gain = cameraProvider.ConnectedCamera.Gain,
                 PixelFormat = cameraProvider.ConnectedCamera.PixelFormat,
-                PWM = model.CurrentBright
+                PWM = behavior.CurrentBright
             };
 
             snapshotStorage.Add(snapshot);

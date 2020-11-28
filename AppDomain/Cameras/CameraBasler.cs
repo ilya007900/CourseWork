@@ -129,7 +129,7 @@ namespace AppDomain.Cameras
         {
             if (!IsGrabbing)
             {
-                return null;
+                throw new Exception("Can't take snapshot. Camera isn't grabbing");
             }
 
             needSnapshot = true;
