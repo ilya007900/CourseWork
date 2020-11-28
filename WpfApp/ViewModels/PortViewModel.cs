@@ -61,7 +61,7 @@ namespace WpfApp.ViewModels
             {
                 if (disconnectCommand == null)
                 {
-                    disconnectCommand = new DelegateCommand(portProvider.Disconnect, () => Port != null);
+                    disconnectCommand = new DelegateCommand(portProvider.Disconnect, () => Port != null && Port.IsOpen);
                     disconnectCommand.ObservesProperty(() => Port);
                 }
 

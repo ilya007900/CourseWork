@@ -56,6 +56,7 @@ namespace AppDomain.PupilReactionEntities
                         if (this.model.CurrentBright == byte.MaxValue)
                         {
                             Stop();
+                            return;
                         }
 
                         IncreaseBright();
