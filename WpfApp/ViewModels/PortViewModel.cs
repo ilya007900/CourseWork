@@ -88,7 +88,7 @@ namespace WpfApp.ViewModels
             {
                 if (executeCommand == null)
                 {
-                    executeCommand = new DelegateCommand<string>(portProvider.WriteCommand, c => !string.IsNullOrEmpty(c));
+                    executeCommand = new DelegateCommand<string>(portProvider.WriteCommand);
                 }
 
                 return executeCommand;

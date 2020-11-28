@@ -19,6 +19,17 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    <Style x:Key="StateMessage">
+        <Setter Property="TextBlock.HorizontalAlignment" Value="Center"></Setter>
+        <Style.Triggers>
+            <Trigger Property="TextBlock.Text" Value="In Progress">
+                <Setter Property="TextBlock.Foreground" Value="Green"></Setter>
+            </Trigger>
+            <Trigger Property="TextBlock.Text" Value="Finished">
+                <Setter Property="TextBlock.Foreground" Value="Red"></Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"></BooleanToVisibilityConverter>
 

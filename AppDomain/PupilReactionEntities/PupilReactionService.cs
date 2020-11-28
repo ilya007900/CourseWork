@@ -81,7 +81,6 @@ namespace AppDomain.PupilReactionEntities
         {
             timer?.Dispose();
             snapshotStorage.Save(behavior.StartingBrightLevel, behavior.CurrentBright);
-            portProvider.WriteCommand("#LEDAOFF");
             portProvider.WriteCommand("#LEDBOFF");
             behavior = null;
             OnStopped();

@@ -39,6 +39,7 @@
                           ItemsSource="{Binding PredefinedCommands}"
                           Margin="0 5"/>
                 <Button Content="Execute" Margin="0 5"
+                        IsEnabled="{Binding Port.IsOpen, FallbackValue=false}"
                         CommandParameter="{Binding Text, ElementName=CommandText}"
                         Command="{Binding ExecuteCommand}"/>
             </StackPanel>

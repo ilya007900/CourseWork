@@ -71,18 +71,9 @@
                   Content="Настройка значений tau">
         </CheckBox>
         <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
-            <Button IsEnabled="{Binding IsInProgress, Converter={StaticResource InverseBooleanConverter}}"
-                    Command="{Binding StartCommand}"
-                    Margin="5"
-                    Width="90"
-                    Content="Start">
-            </Button>
-            <Button IsEnabled="{Binding IsInProgress}"
-                    Margin="5"
-                    Width="90"
-                    Content="Stop">
-            </Button>
+            <Button Command="{Binding StartCommand}" Margin="5" Width="90" Content="Start"></Button>
+            <Button Command="{Binding StopCommand}" Margin="5" Width="90" Content="Stop"></Button>
         </WrapPanel>
-        <TextBlock HorizontalAlignment="Center" Text="{Binding State}"></TextBlock>
+        <TextBlock Style="{StaticResource StateMessage}" Text="{Binding State}"></TextBlock>
     </StackPanel>
 </UserControl>

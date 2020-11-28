@@ -5,6 +5,7 @@ using AppDomain.Utils;
 using Basler.Pylon;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace AppDomain.Cameras
@@ -101,6 +102,17 @@ namespace AppDomain.Cameras
             Camera = camera;
         }
 
+        public void SetDefaultSettings()
+        {
+            ExposureAuto = true;
+            GainAuto = false;
+            Gain = 0;
+            if (PixelFormats.Contains("Mono 12p"))
+            {
+                PixelFormat = "Mono 12p";
+            }
+        }
+
         public void StartGrabbing()
         {
             if (IsGrabbing)
@@ -141,16 +153,24 @@ namespace AppDomain.Cameras
 
         private void OnImageGrabbed(object sender, ImageGrabbedEventArgs e)
         {
-            OnPropertyChanged(nameof(FrameRate));
-            if (ExposureAuto)
+            try
             {
-                OnPropertyChanged(nameof(ExposureTime));
-            }
+                OnPropertyChanged(nameof(FrameRate));
+                if (ExposureAuto)
+                {
+                    OnPropertyChanged(nameof(ExposureTime));
+                }
 
-            if (GainAuto)
-            {
-                OnPropertyChanged(nameof(Gain));
+                if (GainAuto)
+                {
+                    OnPropertyChanged(nameof(Gain));
+                }
             }
+            catch (Exception)
+            {
+                //ignore
+            }
+            
 
             if (needSnapshot)
             {

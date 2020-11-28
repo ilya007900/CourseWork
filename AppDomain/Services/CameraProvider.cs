@@ -37,6 +37,7 @@ namespace AppDomain.Services
                     var camera = new Camera();
                     camera.Open();
                     ConnectedCamera = new CameraBasler(camera);
+                    ConnectedCamera.SetDefaultSettings();
                     ConnectedCamera.Camera.ConnectionLost += Camera_ConnectionLost;
                     OnCameraConnected();
                     timer.Dispose();

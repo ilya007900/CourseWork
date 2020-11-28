@@ -22,6 +22,38 @@ namespace AppDomain.BrightnessDistributionEntities
             this.portProvider = portProvider;
         }
 
+        public Result RunTauTuning(int number, int tau)
+        {
+            if (cameraProvider.ConnectedCamera == null)
+            {
+                return Result.Failure("Camera not found. Please connect camera.");
+            }
+
+            if (portProvider.ConnectedPort == null)
+            {
+                return Result.Failure("Port not found. Please connect port.");
+            }
+
+            try
+            {
+                cameraProvider.ConnectedCamera.ExposureAuto = false;
+
+                if (!cameraProvider.ConnectedCamera.IsGrabbing)
+                {
+                    cameraProvider.ConnectedCamera.StartGrabbing();
+                }
+
+                cameraProvider.ConnectedCamera.ExposureTime = tau;
+                portProvider.WriteCommand($"#LED{number}ON");
+                Thread.Sleep(1000);
+                return Result.Success();
+            }
+            catch (Exception e)
+            {
+                return Result.Failure(e.Message);
+            }
+        }
+
         public Result Run(IReadOnlyList<DiodeBehavior> diodeBehaviors)
         {
             if (cameraProvider.ConnectedCamera == null)
@@ -36,12 +68,13 @@ namespace AppDomain.BrightnessDistributionEntities
 
             try
             {
+                cameraProvider.ConnectedCamera.ExposureAuto = false;
+
                 if (!cameraProvider.ConnectedCamera.IsGrabbing)
                 {
                     cameraProvider.ConnectedCamera.StartGrabbing();
                 }
 
-                cameraProvider.ConnectedCamera.ExposureAuto = false;
                 portProvider.ConnectedPort.DataReceived += ConnectedPort_DataReceived;
 
                 foreach (var diodeBehavior in diodeBehaviors)
@@ -90,7 +123,7 @@ namespace AppDomain.BrightnessDistributionEntities
 
         private void ExecuteDiodeBehavior(DiodeBehavior diodeBehavior)
         {
-            cameraProvider.ConnectedCamera.ExposureTime = diodeBehavior.Tau;
+            var snapshotsCount = 4;
 
             if (diodeBehavior.Step != 0)
             {
@@ -103,23 +136,39 @@ namespace AppDomain.BrightnessDistributionEntities
 
             portProvider.WriteCommand("#LEDAOFF");
 
-            snapshotStorage.Add(TakeSnapshot(diodeBehavior.Diode.MaxEnergy));
-
             portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}ON");
-            Thread.Sleep((int)diodeBehavior.Tau);
-            snapshotStorage.Add(TakeSnapshot(diodeBehavior.Diode.MaxEnergy));
-
-            var km1Tau = diodeBehavior.CalculateKm1Tau();
-            cameraProvider.ConnectedCamera.ExposureTime = km1Tau;
-            Thread.Sleep((int)km1Tau);
-            snapshotStorage.Add(TakeSnapshot(diodeBehavior.Diode.MaxEnergy));
-
-            var km2Tau = diodeBehavior.CalculateKm2Tau();
-            cameraProvider.ConnectedCamera.ExposureTime = km2Tau;
-            Thread.Sleep((int)km2Tau);
-            snapshotStorage.Add(TakeSnapshot(diodeBehavior.Diode.MaxEnergy));
+            Thread.Sleep(1);
+            TakeSnapshots(snapshotsCount, (int)diodeBehavior.Tau, diodeBehavior.Diode.MaxEnergy);
 
             portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}OFF");
+            Thread.Sleep(1);
+            TakeSnapshots(snapshotsCount, (int)diodeBehavior.Tau, diodeBehavior.Diode.MaxEnergy);
+
+            portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}ON");
+            Thread.Sleep(1);
+            var km1Tau = (int)diodeBehavior.CalculateKm1Tau();
+            TakeSnapshots(snapshotsCount, km1Tau, diodeBehavior.Diode.MaxEnergy);
+
+            portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}OFF");
+            Thread.Sleep(1);
+            TakeSnapshots(snapshotsCount, (int)diodeBehavior.Tau, diodeBehavior.Diode.MaxEnergy);
+
+            portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}ON");
+            var km2Tau = (int)diodeBehavior.CalculateKm2Tau();
+            TakeSnapshots(snapshotsCount, km2Tau, diodeBehavior.Diode.Number);
+
+            Thread.Sleep(1);
+            TakeSnapshots(snapshotsCount, (int)diodeBehavior.Tau, diodeBehavior.Diode.MaxEnergy);
+            portProvider.WriteCommand($"#LED{diodeBehavior.Diode.Number}OFF");
+        }
+
+        private void TakeSnapshots(int count, int tau, int energy)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                cameraProvider.ConnectedCamera.ExposureTime = tau;
+                snapshotStorage.Add(TakeSnapshot(energy));
+            }
         }
 
         private void OnDiodeBehaviorExecuting(byte number)

@@ -17,16 +17,19 @@ namespace WpfApp.ViewModels
         private readonly BrightnessDistributionService service;
         private readonly FileDialogService fileDialogService;
 
-        private IReadOnlyList<DiodeBehaviorViewModel> diodes = 
+        private IReadOnlyList<DiodeBehaviorViewModel> diodes =
             Diode.DefaultDiodes.Select(DiodeBehaviorViewModel.From).ToList();
 
         private bool tauTuning;
         private bool isInProgress;
         private string state;
 
+        private bool stopRequired;
+
         private DelegateCommand loadDiodesCommand;
         private DelegateCommand saveDiodesCommand;
         private DelegateCommand startCommand;
+        private DelegateCommand stopCommand;
 
         public IReadOnlyList<DiodeBehaviorViewModel> Diodes
         {
@@ -66,12 +69,28 @@ namespace WpfApp.ViewModels
             }
         }
 
-        public DelegateCommand LoadDiodesCommand => loadDiodesCommand ?? (loadDiodesCommand = new DelegateCommand(LoadDiodes));
+        public DelegateCommand StopCommand
+        {
+            get
+            {
+                if (stopCommand == null)
+                {
+                    stopCommand = new DelegateCommand(Stop, () => IsInProgress);
+                    stopCommand.ObservesProperty(() => IsInProgress);
+                }
 
-        public DelegateCommand SaveDiodesCommand => saveDiodesCommand ?? (saveDiodesCommand = new DelegateCommand(SaveDiodes));
+                return stopCommand;
+            }
+        }
+
+        public DelegateCommand LoadDiodesCommand =>
+            loadDiodesCommand ?? (loadDiodesCommand = new DelegateCommand(LoadDiodes));
+
+        public DelegateCommand SaveDiodesCommand =>
+            saveDiodesCommand ?? (saveDiodesCommand = new DelegateCommand(SaveDiodes));
 
         public BrightnessDistributionViewModel(
-            BrightnessDistributionService service, 
+            BrightnessDistributionService service,
             FileDialogService fileDialogService)
         {
             this.service = service;
@@ -112,42 +131,92 @@ namespace WpfApp.ViewModels
 
         public void Start()
         {
-            var diodesBehavior = new List<DiodeBehavior>();
             var useDiodes = Diodes.Where(x => x.Use).ToArray();
-            foreach (var diodeViewModel in useDiodes)
+
+            if (TauTuning)
             {
-                var createResult = DiodeBehaviorViewModel.To(diodeViewModel);
-                if (createResult.HasErrors)
+                var thread = new Thread(() => RunTauTuning(useDiodes));
+                thread.Start();
+            }
+            else
+            {
+                var diodesBehavior = new List<DiodeBehavior>();
+                foreach (var diodeViewModel in useDiodes)
                 {
-                    MessageBox.Show(createResult.ErrorMessage);
-                    return;
+                    var createResult = DiodeBehaviorViewModel.To(diodeViewModel);
+                    if (createResult.HasErrors)
+                    {
+                        MessageBox.Show(createResult.ErrorMessage);
+                        return;
+                    }
+
+                    diodesBehavior.Add(createResult.Value);
                 }
 
-                diodesBehavior.Add(createResult.Value);
+                var thread = new Thread(() => Run(diodesBehavior));
+                thread.Start();
+            }
+        }
+
+        public void Run(IReadOnlyList<DiodeBehavior> diodesBehavior)
+        {
+            IsInProgress = true;
+            State = "In Progress";
+
+            service.DiodeBehaviorExecuting += Service_DiodeBehaviorExecuting;
+            service.DiodeBehaviorExecuted += Service_DiodeBehaviorExecuted;
+
+            var result = service.Run(diodesBehavior);
+            if (result.HasErrors)
+            {
+                MessageBox.Show(result.ErrorMessage);
             }
 
-            var thread = new Thread(o =>
+            service.DiodeBehaviorExecuting -= Service_DiodeBehaviorExecuting;
+            service.DiodeBehaviorExecuted -= Service_DiodeBehaviorExecuted;
+
+            IsInProgress = false;
+            State = "Finished";
+        }
+
+        public void RunTauTuning(IReadOnlyList<DiodeBehaviorViewModel> diodesBehavior)
+        {
+            if (!diodesBehavior.Any())
             {
-                IsInProgress = true;
-                State = "In progress";
+                return;
+            }
 
-                service.DiodeBehaviorExecuting += Service_DiodeBehaviorExecuting;
-                service.DiodeBehaviorExecuted += Service_DiodeBehaviorExecuted;
+            IsInProgress = true;
+            State = "In Progress";
 
-                var result = service.Run(diodesBehavior);
-                if (result.HasErrors)
+            var i = 0;
+            while (!stopRequired)
+            {
+                diodesBehavior[i].IsInUse = true;
+                service.RunTauTuning(diodesBehavior[i].Number, (int) diodesBehavior[i].Tau);
+                diodesBehavior[i].IsInUse = false;
+
+                if (i == diodesBehavior.Count - 1)
                 {
-                    MessageBox.Show(result.ErrorMessage);
+                    i = 0;
                 }
+                else
+                {
+                    i++;
+                }
+            }
 
-                service.DiodeBehaviorExecuting -= Service_DiodeBehaviorExecuting;
-                service.DiodeBehaviorExecuted -= Service_DiodeBehaviorExecuted;
+            IsInProgress = false;
+            State = "Finished";
+            stopRequired = false;
+        }
 
-                IsInProgress = false;
-                State = "Finished";
-            });
-
-            thread.Start();
+        public void Stop()
+        {
+            if (TauTuning)
+            {
+                stopRequired = true;
+            }
         }
 
         private void Service_DiodeBehaviorExecuting(object sender, DiodeBehaviorExecutingEventArgs e)
