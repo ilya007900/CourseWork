@@ -14,6 +14,8 @@ namespace AppDomain.Cameras
         private readonly ManualResetEvent imageWaitEvent = new ManualResetEvent(false);
 
         private PixelDataConverter converter = new PixelDataConverter();
+
+        private bool needSnapshot = false;
         private IGrabResult lastGrabResult;
 
         public ICamera Camera { get; }
@@ -130,6 +132,7 @@ namespace AppDomain.Cameras
                 return null;
             }
 
+            needSnapshot = true;
             imageWaitEvent.WaitOne();
             imageWaitEvent.Reset();
 
@@ -149,11 +152,17 @@ namespace AppDomain.Cameras
                 OnPropertyChanged(nameof(Gain));
             }
 
-            imageWaitEvent.Set();
-            lastGrabResult = e.GrabResult.Clone();
-
-            var bitmap = converter.Convert(e.GrabResult);
-            ImageGrabbed?.Invoke(sender, new ImageGrabbedEvent(bitmap));
+            if (needSnapshot)
+            {
+                lastGrabResult = e.GrabResult.Clone();
+                needSnapshot = false;
+                imageWaitEvent.Set();
+            }
+            else
+            {
+                var bitmap = converter.Convert(e.GrabResult);
+                ImageGrabbed?.Invoke(sender, new ImageGrabbedEvent(bitmap));
+            }
         }
     }
 }

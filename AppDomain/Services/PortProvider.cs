@@ -12,6 +12,7 @@ namespace AppDomain.Services
         public IReadOnlyList<string> GetAvailablePorts() => SerialPort.GetPortNames();
 
         public event EventHandler PortConnected;
+        public event EventHandler PortDisconnected;
         public event EventHandler<PortCommandSentEventArgs> CommandSent;
 
         public void Connect(string portName)
@@ -26,6 +27,7 @@ namespace AppDomain.Services
         {
             ConnectedPort.Close();
             ConnectedPort = null;
+            OnPortDisconnected();
         }
 
         public void WriteCommand(string command)
@@ -37,6 +39,11 @@ namespace AppDomain.Services
         private void OnPortConnected()
         {
             PortConnected?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnPortDisconnected()
+        {
+            PortDisconnected?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnCommandSent(string command)

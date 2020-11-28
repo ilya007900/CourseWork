@@ -87,13 +87,15 @@ namespace AppDomain.BrightnessDistributionEntities
         {
             cameraProvider.ConnectedCamera.ExposureTime = diodeBehavior.Tau;
 
-            portProvider.WriteCommand("#ENBLON");
-            portProvider.WriteCommand($"{diodeBehavior.Step}");
+            if (diodeBehavior.Step != 0)
+            {
+                portProvider.WriteCommand("#ENBLON");
+                portProvider.WriteCommand($"{diodeBehavior.Step}");
+                manualResetEvent.WaitOne();
+                manualResetEvent.Reset();
+                portProvider.WriteCommand("#ENBLOFF");
+            }
 
-            manualResetEvent.WaitOne();
-            manualResetEvent.Reset();
-
-            portProvider.WriteCommand("#ENBLOFF");
             portProvider.WriteCommand("#LEDAOFF");
 
             snapshotStorage.Add(TakeSnapshot(diodeBehavior.Diode.MaxEnergy));

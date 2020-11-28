@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO.Ports;
-using System.Windows.Threading;
-using AppDomain.Services;
+﻿using AppDomain.Services;
 using Prism.Commands;
 using Prism.Mvvm;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO.Ports;
+using System.Windows;
 
 namespace WpfApp.ViewModels
 {
@@ -46,8 +46,9 @@ namespace WpfApp.ViewModels
             {
                 if (connectCommand == null)
                 {
-                    connectCommand = new DelegateCommand<string>(portProvider.Connect, port => !string.IsNullOrEmpty(port));
+                    connectCommand = new DelegateCommand<string>(portProvider.Connect, port => !string.IsNullOrEmpty(port) && Port == null);
                     connectCommand.ObservesProperty(() => SelectedPort);
+                    connectCommand.ObservesProperty(() => Port);
                 }
 
                 return connectCommand;
@@ -99,6 +100,7 @@ namespace WpfApp.ViewModels
             this.portProvider = portProvider;
 
             this.portProvider.PortConnected += PortProvider_PortConnected;
+            this.portProvider.PortDisconnected += PortProvider_PortDisconnected;
             this.portProvider.CommandSent += PortProvider_CommandSent;
         }
 
@@ -108,14 +110,20 @@ namespace WpfApp.ViewModels
             Port.DataReceived += Port_DataReceived;
         }
 
+        private void PortProvider_PortDisconnected(object sender, System.EventArgs e)
+        {
+            RaisePropertyChanged(nameof(Port));
+            Port.DataReceived -= Port_DataReceived;
+        }
+
         private void PortProvider_CommandSent(object sender, AppDomain.Events.PortCommandSentEventArgs e)
         {
-            Dispatcher.CurrentDispatcher.Invoke(() => SentCommands.Add(e.Command));
+            Application.Current.Dispatcher.Invoke(() => SentCommands.Add(e.Command));
         }
 
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            Dispatcher.CurrentDispatcher.Invoke(() => ReceivedData.Add(e.ToString()));
+            Application.Current.Dispatcher.Invoke(() => ReceivedData.Add(e.ToString()));
         }
     }
 }

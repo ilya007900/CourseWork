@@ -14,7 +14,8 @@ namespace AppDomain.PupilReactionEntities
         private Timer timer;
         private PupilReaction model;
 
-        public event EventHandler<BrightChangedEventArgs> BrightChanged; 
+        public event EventHandler<BrightChangedEventArgs> BrightChanged;
+        public event EventHandler<EventArgs> Stopped; 
 
         public PupilReactionService(CameraProvider cameraProvider, PortProvider portProvider)
         {
@@ -52,6 +53,11 @@ namespace AppDomain.PupilReactionEntities
                 {
                     timer = new Timer(state =>
                     {
+                        if (this.model.CurrentBright == byte.MaxValue)
+                        {
+                            Stop();
+                        }
+
                         IncreaseBright();
                         Snapshot();
                     }, null, 2000, 2000);
@@ -72,6 +78,7 @@ namespace AppDomain.PupilReactionEntities
             portProvider.WriteCommand("#LEDAOFF");
             portProvider.WriteCommand("#LEDBOFF");
             model = null;
+            OnStopped();
         }
 
         public void IncreaseBright()
@@ -100,6 +107,11 @@ namespace AppDomain.PupilReactionEntities
         private void OnBrightChanged(ushort bright)
         {
             BrightChanged?.Invoke(this, new BrightChangedEventArgs(bright));
+        }
+
+        private void OnStopped()
+        {
+            Stopped?.Invoke(this, EventArgs.Empty);
         }
     }
 }

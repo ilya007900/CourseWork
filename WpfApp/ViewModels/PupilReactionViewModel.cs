@@ -109,6 +109,7 @@ namespace WpfApp.ViewModels
             InProgress = true;
             State = "In Progress";
 
+            service.Stopped += Service_Stopped;
             service.BrightChanged += Service_BrightChanged;
 
             var model = new PupilReaction(StartingBrightLevel, BrightIncreaseCoefficient);
@@ -121,23 +122,33 @@ namespace WpfApp.ViewModels
             }
         }
 
-        private void Service_BrightChanged(object sender, BrightChangedEventArgs e)
-        {
-            CurrentBright = e.Bright;
-        }
-
         private void Stop()
         {
             service.Stop();
-            service.BrightChanged -= Service_BrightChanged;
-            InProgress = false;
-            State = "Finished";
+            OnServiceStopped();
         }
 
         private void IncreaseBright()
         {
             service.Snapshot();
             service.IncreaseBright();
+        }
+
+        private void OnServiceStopped()
+        {
+            service.BrightChanged -= Service_BrightChanged;
+            InProgress = false;
+            State = "Finished";
+        }
+
+        private void Service_Stopped(object sender, System.EventArgs e)
+        {
+            OnServiceStopped();
+        }
+
+        private void Service_BrightChanged(object sender, BrightChangedEventArgs e)
+        {
+            CurrentBright = e.Bright;
         }
     }
 }
