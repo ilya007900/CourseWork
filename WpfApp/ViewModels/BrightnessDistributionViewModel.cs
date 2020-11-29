@@ -193,7 +193,13 @@ namespace WpfApp.ViewModels
             while (!stopRequired)
             {
                 diodesBehavior[i].IsInUse = true;
-                service.RunTauTuning(diodesBehavior[i].Number, (int) diodesBehavior[i].Tau);
+                var result = service.RunTauTuning(diodesBehavior[i].Number, (int) diodesBehavior[i].Tau);
+                if (result.HasErrors)
+                {
+                    MessageBox.Show(result.ErrorMessage);
+                    break;
+                }
+
                 diodesBehavior[i].IsInUse = false;
 
                 if (i == diodesBehavior.Count - 1)

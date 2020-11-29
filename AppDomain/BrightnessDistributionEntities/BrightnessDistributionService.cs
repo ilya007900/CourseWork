@@ -46,6 +46,7 @@ namespace AppDomain.BrightnessDistributionEntities
                 cameraProvider.ConnectedCamera.ExposureTime = tau;
                 portProvider.WriteCommand($"#LED{number}ON");
                 Thread.Sleep(1000);
+                portProvider.WriteCommand($"#LED{number}OFF");
                 return Result.Success();
             }
             catch (Exception e)

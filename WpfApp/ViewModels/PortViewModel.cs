@@ -113,7 +113,6 @@ namespace WpfApp.ViewModels
         private void PortProvider_PortDisconnected(object sender, System.EventArgs e)
         {
             RaisePropertyChanged(nameof(Port));
-            Port.DataReceived -= Port_DataReceived;
         }
 
         private void PortProvider_CommandSent(object sender, AppDomain.Events.PortCommandSentEventArgs e)
