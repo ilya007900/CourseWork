@@ -41,6 +41,6 @@ namespace AppDomain.BrightnessDistributionEntities
 
         public double CalculateKm1Tau() => Tau / Km1;
 
-        public double CalculateKm2Tau() => CalculateKm1Tau() / Km2;
+        public double CalculateKm2Tau() => Tau / Km2;
     }
 }
